@@ -1,1 +1,574 @@
-# tang-dynasty-weiboq
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大唐搜索 - 盛世图鉴</title>
+    <style>
+        /* --- 1. 基础样式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5; /* 更现代的浅灰背景 */
+            margin: 0;
+            padding-top: 70px;
+        }
+
+        /* --- 2. 顶部导航栏 --- */
+        .navbar {
+            background-color: #fff;
+            height: 60px;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-content {
+            width: 1000px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 900;
+            color: #fa7d3c;
+            margin-right: 40px;
+            cursor: pointer;
+        }
+
+        .search-box {
+            flex-grow: 1;
+            position: relative;
+            max-width: 500px;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 15px;
+            border: 1px solid #e0e0e0;
+            background-color: #f0f2f5;
+            border-radius: 20px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            background-color: #fff;
+            border-color: #fa7d3c;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #fa7d3c;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* --- 3. 布局结构 --- */
+        .container {
+            width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            padding: 0 10px;
+        }
+
+        .main-feed {
+            flex: 2.2; /* 稍微加宽左侧 */
+        }
+
+        .sidebar {
+            flex: 1;
+        }
+
+        /* --- 4. 分类标签栏 (新增) --- */
+        .category-bar {
+            background: #fff;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .cat-btn {
+            border: none;
+            background: none;
+            font-size: 15px;
+            color: #666;
+            cursor: pointer;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 5px;
+        }
+
+        .cat-btn.active {
+            color: #fa7d3c;
+            font-weight: bold;
+        }
+
+        .cat-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background-color: #fa7d3c;
+            border-radius: 2px;
+        }
+
+        /* --- 5. 内容卡片 --- */
+        .card {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: #eee;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            overflow: hidden;
+        }
+
+        .user-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .post-time {
+            font-size: 12px;
+            color: #939393;
+            margin-top: 2px;
+        }
+
+        .post-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 12px;
+            white-space: pre-wrap; /* 保留换行 */
+        }
+
+        /* 图片网格布局 */
+        .post-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .post-images img {
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: zoom-in;
+            flex-grow: 1;
+            max-width: 49%; /* 默认两列 */
+        }
+        
+        /* 如果只有一张图，宽一点 */
+        .post-images.single-img img {
+            max-width: 70%;
+            height: auto;
+            max-height: 400px;
+        }
+
+        .tag {
+            color: #eb7350;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        
+        .tag:hover {
+            text-decoration: underline;
+        }
+
+        /* --- 6. 右侧热搜 --- */
+        .hot-board {
+            background: #fff;
+            padding: 0 20px 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .hot-title {
+            font-size: 16px;
+            font-weight: bold;
+            padding: 15px 0;
+            border-bottom: 1px solid #f2f2f2;
+            margin-bottom: 10px;
+        }
+
+        .hot-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .hot-item:hover .item-title {
+            color: #fa7d3c;
+            text-decoration: underline;
+        }
+
+        .rank {
+            margin-right: 10px;
+            font-weight: bold;
+            width: 18px;
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .rank.top-3 {
+            color: #fa7d3c;
+        }
+
+        .hot-icon {
+            background-color: #ff3e3e;
+            color: white;
+            font-size: 10px;
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-left: 5px;
+            font-weight: normal;
+        }
+
+        /* --- 7. 灯箱 (点击放大) --- */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90vh;
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .lightbox-caption {
+            color: #fff;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="nav-content">
+            <div class="logo" onclick="location.reload()">TangBo</div>
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索大唐：佛光寺、三彩、敦煌...">
+                <button class="search-btn" onclick="performSearch()">🔍</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-feed">
+            
+            <div class="category-bar" id="categoryBar">
+                <button class="cat-btn active" onclick="filterCategory('all', this)">全部</button>
+                <button class="cat-btn" onclick="filterCategory('architecture', this)">🏛️ 建筑</button>
+                <button class="cat-btn" onclick="filterCategory('sculpture', this)">🗿 雕塑</button>
+                <button class="cat-btn" onclick="filterCategory('crafts', this)">🏺 工艺</button>
+                <button class="cat-btn" onclick="filterCategory('art', this)">🖌️ 书画</button>
+            </div>
+
+            <div id="feedContainer">
+                </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="hot-board">
+                <div class="hot-title">大唐热搜榜</div>
+                <div id="hotList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+
+    <script>
+        // --- 数据源 (包含真实图片URL) ---
+        const database = [
+            {
+                id: 1,
+                user: "五台山佛光寺",
+                avatar: "🏛️",
+                time: "2小时前",
+                category: "architecture",
+                content: "【大唐木构之魂】#佛光寺东大殿#\n屹立千年而不倒，斗拱层叠如花开。这是大唐现存最宏伟的木结构建筑。梁思成先生曾言：“得见此寺，实乃毕生之幸。”\n这种豪迈与大气，只有在那个时代才能诞生。",
+                images: [
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Foguang_Temple_East_Hall.jpg/800px-Foguang_Temple_East_Hall.jpg",
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Foguang_Temple_East_Hall_structure.jpg/800px-Foguang_Temple_East_Hall_structure.jpg"
+                ]
+            },
+            {
+                id: 2,
+                user: "皇家内府",
+                avatar: "🏺",
+                time: "刚刚",
+                category: "crafts",
+                content: "【国宝鉴赏】#兽首玛瑙杯#\n这可是朕最心爱的酒杯！材质是极其罕见的缠丝玛瑙，俏色处理得恰到好处。兽首似牛非牛，金色的嘴部是流口。充满了西域风情，这才是大唐的国际范儿！✨ #何家村窖藏 #工艺美术",
+                images: [
+                    "https://upload.wikimedia.org/wikipedia/commons/2/23/Onyx_Rhyton_with_gold_mouth_Tang_Dynasty.jpg"
+                ]
+            },
+            {
+                id: 3,
+                user: "龙门石窟研究院",
+                avatar: "🗿",
+                time: "30分钟前",
+                category: "sculpture",
+                content: "#卢舍那大佛#\n凝视这双眼睛，你看到了什么？是慈悲，是威严，还是武皇的气度？\n奉先寺的这组群雕，代表了唐代石刻艺术的最高峰。衣纹流畅，体态丰腴，神情生动。 #世界遗产 #雕塑",
+                images: [
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Longmen_Grottoes%2C_Luoyang%2C_China.jpg/800px-Longmen_Grottoes%2C_Luoyang%2C_China.jpg",
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Vairocana_Buddha_Longmen.jpg/640px-Vairocana_Buddha_Longmen.jpg",
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Longmen_Fengxian_Si_retouched.jpg/800px-Longmen_Fengxian_Si_retouched.jpg"
+                ]
+            },
+            {
+                id: 4,
+                user: "长安画院周昉",
+                avatar: "🖌️",
+                time: "1小时前",
+                category: "art",
+                content: "新画了一幅《簪花仕女图》。\n春夏之交，宫苑之中。贵族女子们身着薄纱，云髻高耸，头插牡丹。我要表现的不仅是美丽，更是那种慵懒、闲适的盛世气度。大唐的红，最是动人。 #美术 #仕女画",
+                images: [
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Ladies_Wearing_Flowers.jpg/1280px-Ladies_Wearing_Flowers.jpg",
+                    "https://upload.wikimedia.org/wikipedia/commons/e/ee/Beauties_Wearing_Flowers_IV.jpg"
+                ]
+            },
+            {
+                id: 5,
+                user: "丝路行者",
+                avatar: "🐫",
+                time: "3小时前",
+                category: "crafts",
+                content: "在集市上看到这一组#唐三彩#骆驼俑，简直活灵活现！\n那昂首嘶鸣的样子，仿佛刚从丝绸之路归来。黄、绿、白三色釉彩交融，这就是“大唐流光”。胡人骑驼，见证了东西方文化的交融。 #陶瓷 #三彩",
+                images: [
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Tang_Sancai_Camel.jpg/640px-Tang_Sancai_Camel.jpg",
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Tang_Sancai_Camel_2.JPG/640px-Tang_Sancai_Camel_2.JPG",
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/CMOC_Treasures_of_Ancient_China_exhibit_-_tricolor_glazed_pottery_horse.jpg/640px-CMOC_Treasures_of_Ancient_China_exhibit_-_tricolor_glazed_pottery_horse.jpg"
+                ]
+            },
+            {
+                id: 6,
+                user: "莫高窟画匠",
+                avatar: "🎨",
+                time: "5小时前",
+                category: "art",
+                content: "#敦煌壁画# 反弹琵琶舞姿翩跹。\n我们在洞窟的墙壁上绘制佛国世界。色彩绚丽，线条飞舞。特别是飞天形象，没有翅膀却能凭空飞翔，全靠这长长的飘带！这是中国艺术的想象力。 #敦煌 #壁画",
+                images: [
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Feitian.jpg/640px-Feitian.jpg",
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Mogao_Cave_61_Map_of_Mount_Wutai_Detail.jpg/800px-Mogao_Cave_61_Map_of_Mount_Wutai_Detail.jpg"
+                ]
+            }
+        ];
+
+        const hotTopics = [
+            { title: "何家村发现千件金银器", heat: "5200万", tag: "爆" },
+            { title: "上官婉儿墓志铭出土", heat: "4300万", tag: "热" },
+            { title: "李白杜甫东都相会", heat: "3850万", tag: "荐" },
+            { title: "长安十二时辰游玩指南", heat: "3100万", tag: "新" },
+            { title: "唐三彩不仅有三种颜色", heat: "2900万", tag: "" },
+            { title: "玄奘法师译经进度", heat: "2500万", tag: "" },
+            { title: "颜真卿书法展", heat: "1800万", tag: "" },
+        ];
+
+        // --- 初始化 ---
+        window.onload = function() {
+            renderFeed(database);
+            renderHotList();
+        };
+
+        // --- 核心逻辑 ---
+
+        // 渲染 Feed 流
+        function renderFeed(data) {
+            const container = document.getElementById('feedContainer');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="card" style="text-align:center; padding:40px; color:#999;">
+                        <h3>🏺 暂无相关内容</h3>
+                        <p>换个词试试？比如“建筑”、“三彩”...</p>
+                    </div>`;
+                return;
+            }
+
+            data.forEach(item => {
+                // 处理图片：如果是单图，给予特殊样式类
+                const imgClass = item.images.length === 1 ? 'post-images single-img' : 'post-images';
+                
+                let imagesHtml = `<div class="${imgClass}">`;
+                item.images.forEach(imgUrl => {
+                    // 添加 onclick 事件触发灯箱
+                    imagesHtml += `<img src="${imgUrl}" onclick="openLightbox('${imgUrl}', '${item.content.substring(0, 20)}...')">`;
+                });
+                imagesHtml += '</div>';
+
+                const html = `
+                    <div class="card">
+                        <div class="user-info">
+                            <div class="avatar">${item.avatar}</div>
+                            <div class="user-meta">
+                                <span class="user-name">${item.user}</span>
+                                <span class="post-time">${item.time}</span>
+                            </div>
+                        </div>
+                        <div class="post-content">${highlightTags(item.content)}</div>
+                        ${imagesHtml}
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // 渲染热搜
+        function renderHotList() {
+            const list = document.getElementById('hotList');
+            hotTopics.forEach((topic, index) => {
+                const rankClass = index < 3 ? 'top-3' : '';
+                const tagHtml = topic.tag ? `<span class="hot-icon">${topic.tag}</span>` : '';
+                
+                list.innerHTML += `
+                    <div class="hot-item" onclick="document.getElementById('searchInput').value='${topic.title}'; performSearch();">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank ${rankClass}">${index + 1}</span>
+                            <span class="item-title">${topic.title}</span>
+                            ${tagHtml}
+                        </div>
+                        <span style="color:#939393; font-size:12px;">${topic.heat}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // 分类筛选功能
+        function filterCategory(category, btnElement) {
+            // 1. 更新按钮样式
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // 2. 筛选数据
+            if (category === 'all') {
+                renderFeed(database);
+            } else {
+                const filtered = database.filter(item => item.category === category);
+                renderFeed(filtered);
+            }
+        }
+
+        // 搜索功能
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            // 搜索时重置分类按钮状态
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.cat-btn:first-child').classList.add('active'); // 回到"全部"高亮但显示搜索结果
+
+            const filtered = database.filter(item => {
+                return item.content.toLowerCase().includes(query) || 
+                       item.user.toLowerCase().includes(query) ||
+                       item.category.toLowerCase().includes(query);
+            });
+            renderFeed(filtered);
+        }
+
+        // 辅助：高亮 #标签#
+        function highlightTags(text) {
+            return text.replace(/#(.+?)#/g, '<span class="tag">#$1#</span>');
+        }
+
+        // --- 灯箱功能 (Lightbox) ---
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxCaption = document.getElementById('lightbox-caption');
+
+        function openLightbox(src, caption) {
+            lightboxImg.src = src;
+            lightboxCaption.innerText = caption;
+            lightbox.style.display = 'flex'; // 使用 flex 居中
+            document.body.style.overflow = 'hidden'; // 禁止背景滚动
+        }
+
+        function closeLightbox() {
+            lightbox.style.display = 'none';
+            document.body.style.overflow = 'auto'; // 恢复滚动
+        }
+
+        // 绑定搜索框回车
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+
+    </script>
+</body>
+</html>
